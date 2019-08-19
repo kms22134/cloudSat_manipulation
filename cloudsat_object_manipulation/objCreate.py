@@ -1,4 +1,5 @@
 from os import path,walk
+import subprocess
 from functools import reduce,partial
 from operator import add
 from math import ceil,log2
@@ -116,7 +117,10 @@ class cloudSatObjects(object):
             #if(i == 100): break
     
     def _packed(self):
-        raise Exception("See Commented Code below to create this function")
+        if(path.splitext(self.input)[-1] == '.xz'):
+            subprocess.call(['tar','xJvf',self.input])
+        else:
+            raise Exception("add decompression of other variables")
 
     def _verbose_file_name(self,):
         '''
