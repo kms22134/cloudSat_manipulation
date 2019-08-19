@@ -12,6 +12,13 @@ This package contains a set of packages and command line plugins that can identi
 * Free software: MIT license
 * Documentation: https://cloudsat-object-manipulation.readthedocs.io.
 
+## Instalation
+To install cloudsat_object_manipulation
+
+```bash
+$ pip install https://github.com/kms22134/cloudsat_manipulation
+````
+`
 # Features
 --------
 
