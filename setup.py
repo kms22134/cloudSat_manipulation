@@ -32,6 +32,7 @@ requirements = [
         'numpy',
         'scipy',
         'xarray',
+        'netcdf4',
         ]
 
 setup_requirements = [ ]

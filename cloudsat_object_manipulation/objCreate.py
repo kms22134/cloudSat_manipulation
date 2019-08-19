@@ -1,6 +1,7 @@
 from os import path,walk
 from functools import reduce,partial
 from operator import add
+from math import ceil,log2
 from h5py import File
 #%%%%%%%%%%%%%%%%%%%%%import package to calculate cloud object properties%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from cloudsat_object_manipulation import cloud_stats
@@ -9,13 +10,15 @@ import LayerObjects
 #%%%%%%%%%%%%%%%%%%%%%import numpy package to reorder array along axis%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from numpy import take_along_axis
 #%%%%%%%%%%%%%%%%%%%%%import package to convert list to ndarray%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-from numpy import array
+from numpy import array,zeros
 ##%%%%%%%%%%%%%%%%%%%%%import package to identify the unique values of a ndarray%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from numpy import unique
 #%%%%%%%%%%%%%%%%%%%%%import package to create a mask array based on values in another array%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from numpy import isin
 #%%%%%%%%%%%%%%%%%%%%%import packages to convert x-indices and y-indices to and from a 1d array of flattened indices%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from numpy import ravel_multi_index,unravel_index
+#%%%%%%%%%%%%%%%%%%%%%impoort package to round ndarray%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+from numpy import round,floor
 #%%%%%%%%%%%%%%%%%%%%%impoort pandas packages to constrain lat and lon bounds on identified cloud objects%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from pandas import DataFrame,Series
 #%%%%%%%%%%%%%%%%%%%%%import package that can be used to label contiguous regions of a 2-d array%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -25,7 +28,7 @@ from scipy.sparse import csr_matrix,coo_matrix
 #%%%%%%%%%%%%%%%%%%%%%import xarray dataset to create output netcdf file%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 from xarray import Dataset
 #%%%%%%%%%%%%%%%%%%%%%import numpy dtypes nessesary%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-from numpy import int32,float32
+from numpy import uint8,int32,float32,finfo
 
 class cloudSatObjects(object):
     '''
@@ -106,6 +109,7 @@ class cloudSatObjects(object):
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             self._cStats()
             self._min_max_lat_lon()
+            self._single_layer_clouds()
             self._verbose_file_name()
             self._write_netcdf()
 
@@ -251,24 +255,135 @@ class cloudSatObjects(object):
         '''
 
         data_dict = {
-                'sparce_objects' : (('sparce_1d_indx',),self.csr_data),
-                'extent'         : (('allObjects_unq','stats'),self.objStatistics.extent_stats.astype(float32),),
-                'top'            : (('allObjects_unq','stats'),self.objStatistics.topHeight[self.unq_msk].astype(float32) / 1000.,),
-                'base'           : (('allObjects_unq','stats'),self.objStatistics.baseHeight[self.unq_msk].astype(float32) / 1000.,),
-                'thickness'      : (('allObjects_unq','stats'),self.objStatistics.thickness[self.unq_msk].astype(float32) / 1000.,),
-                'lat_bounds'     : (('allObjects_unq','geo_bounds'),self.lat_bounds),
-                'lon_bounds'     : (('allObjects_unq','geo_bounds'),self.lon_bounds),
+                'sparce_objects'    : (('sparce_1d_indx',),self.csr_data),
+                'single_layer_flag' : (('allObjects_unq',),self.single_layer_clouds),
+                'extent'            : (('allObjects_unq','stats'),self.objStatistics.extent_stats,),
+                'top'               : (('allObjects_unq','stats'),self.objStatistics.topHeight[self.unq_msk].astype(float32) / 1000.,),
+                'base'              : (('allObjects_unq','stats'),self.objStatistics.baseHeight[self.unq_msk].astype(float32) / 1000.,),
+                'thickness'         : (('allObjects_unq','stats'),self.objStatistics.thickness[self.unq_msk].astype(float32) / 1000.,),
+                'lat_bounds'        : (('allObjects_unq','geo_bounds'),self.lat_bounds),
+                'lon_bounds'        : (('allObjects_unq','geo_bounds'),self.lon_bounds),
                 }
 
         coords_dict = {
                 'sparce_1d_indx' : self.sparce_flat_indx.astype(int32),
                 'allObjects_unq' : self.unq_clds,
                 'cloudSat_shape' : array(self.cloudObjects.shape),
+                'stats'          : [1,2,3,4],
                 }
 
         _outData = Dataset(data_vars = data_dict,coords = coords_dict)
-        _outData.to_netcdf(self._output_file)
+
+        #_extent_offset,_extent_scale = self._add_scale_and_offset(_outData.extent.values)
+        #_top_offset,_top_scale       = self._add_scale_and_offset(_outData.top.values)
+        #_base_offset,_base_scale     = self._add_scale_and_offset(_outData.base.values)
+        #_thick_offset,_thick_scale   = self._add_scale_and_offset(_outData.thickness.values)
+
+        _outData.cloudSat_shape.attrs = self.set_var_attributes(
+                _outData.cloudSat_shape,
+                description = 'Shape of cloudsat orbit',
+                )
+        _outData.sparce_1d_indx.attrs = self.set_var_attributes(
+                _outData.sparce_1d_indx,
+                description = 'flattend indices of sparce_objects variable',
+                )
+        _outData.sparce_objects.attrs = self.set_var_attributes(
+                _outData.sparce_objects,
+                description = 'cloud objects corresponding to 1d coordinates from 2d cloudsat field',
+                )
+        _outData.allObjects_unq.attrs = self.set_var_attributes(
+                _outData.allObjects_unq,
+                description = 'unique list of cloud objects',
+                )
+        _outData.stats.attrs = self.set_var_attributes(
+                _outData.stats,
+                col_1 = 'min',
+                col_2 = 'mean',
+                col_3 = 'median',
+                col_4 = 'max',
+                )
+        _outData.extent.attrs = self.set_var_attributes(
+                _outData.extent,
+                description = 'cloud object along-track extent',
+                )
+        _outData.top.attrs = self.set_var_attributes(
+                _outData.top,
+                description = 'cloud object top height',
+                )
+        _outData.base.attrs = self.set_var_attributes(
+                _outData.base,
+                description = 'cloud object base height',
+                )
+        _outData.thickness.attrs = self.set_var_attributes(
+                _outData.thickness,
+                description = 'cloud object thickness',
+                )
+        _outData.lat_bounds.attrs = self.set_var_attributes(
+                _outData.lat_bounds,
+                long_name = 'cloud object latitude bounds',
+                units     = 'degrees north',
+                )
+        _outData.lon_bounds.attrs = self.set_var_attributes(
+                _outData.lon_bounds,
+                long_name = 'cloud object longitude bounds',
+                units     = 'degrees east',
+                )
+
+        _outData.to_netcdf(
+                self._output_file,
+                format = 'NETCDF4',
+                encoding = {
+                    'sparce_objects'    : {'dtype' : 'int32'},
+                    'single_layer_flag' : {'dtype' : 'uint8'},
+                    'stats'             : {'dtype' : 'uint8'},
+                    'cloudSat_shape'    : {'dtype' : 'uint16'},
+                    'extent'            : {
+                        'dtype'        : 'float32',
+                        '_FillValue'   : -999.,
+                        #'scale_factor' : _extent_scale,
+                        #'add_offset'   : _extent_offset,
+                        },
+                    'top'              : {
+                        'dtype'        : 'float32',
+                        '_FillValue'   : -999.,
+                        #'scale_factor' : _top_scale,
+                        #'add_offset'   : _top_offset,
+                        },
+                    'base'             : {
+                        'dtype'        : 'float32',
+                        '_FillValue'   : -999.,
+                        #'scale_factor' : _base_scale,
+                        #'add_offset'   : _base_offset,
+                        },
+                    'thickness'        : {
+                        'dtype'        : 'float32',
+                        '_FillValue'   : -999.,
+                        #'scale_factor' : _thick_scale,
+                        #'add_offset'   : _thick_offset,
+                        },
+                    'lon_bounds'       : {
+                        'dtype'        : 'float32',
+                        '_FillValue'   : -999.,
+                        #'scale_factor' : _thick_scale,
+                        #'add_offset'   : _thick_offset,
+                        },
+                    'lat_bounds'       : {
+                        'dtype'        : 'float32',
+                        '_FillValue'   : -999.,
+                        #'scale_factor' : _thick_scale,
+                        #'add_offset'   : _thick_offset,
+                        },
+                    }
+                )
         
+    def _single_layer_clouds(self,):
+        '''
+        '''
+
+        self.single_layer_clouds = zeros(self.unq_clds.shape,dtype = uint8)
+        single_msk = DataFrame({'objects' : Series(self.csr_data),'indc' : Series(self.csr_indx)}).groupby('objects')['indc'].nunique().values
+        self.single_layer_clouds[single_msk == 1] = 1
+
     def _min_max_lat_lon(self,):
         '''
         '''
@@ -287,6 +402,25 @@ class cloudSatObjects(object):
 
         self.lat_bounds = array([df_geo_min['latitude'].values,df_geo_max['latitude'].values]).T.astype(float32)
         self.lon_bounds = array([df_geo_min['longitude'].values,df_geo_max['longitude'].values]).T.astype(float32)
+
+    def set_var_attributes(self,variable,**kwargs,):
+        for k,v in kwargs.items():
+            variable.attrs[k] = v
+
+        return variable.attrs
+
+    def _add_scale_and_offset(self,data):
+        '''
+        '''
+        precision = finfo(float32).precision 
+        nvalues = 1 + ceil( (data.max() - data.min()) / (2 * precision))
+        n = ceil(log2(nvalues))
+        offset = data.min()
+        scale = (data.max() - data.min()) / (2**n - 1)
+
+        P = round((data - offset) / scale)
+        
+        return offset,scale
 
     def _scaleAdjust(self,):
         '''
