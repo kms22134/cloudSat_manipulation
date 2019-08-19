@@ -1,4 +1,4 @@
-from os import path,walk,getcwd
+from os import path,walk,getcwd,makedirs
 import subprocess
 from functools import reduce,partial
 from operator import add
@@ -123,7 +123,7 @@ class cloudSatObjects(object):
         else:
             raise Exception("add decompression of other variables")
 
-        self.input = f'{getcwd()}/{path.split(dirIn)[1].split(".")[0]}'
+        self.input = f'{getcwd()}/{path.split(self.input)[1].split(".")[0]}'
         self._ravel_files()
 
         if(not self._path_decision(self.output)): self._create_output_dir()
