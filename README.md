@@ -17,15 +17,13 @@ To install cloudsat_object_manipulation
 
 ```bash
 $ pip install https://github.com/kms22134/cloudsat_manipulation
-````
-`
+```
+
 # Features
---------
 
 * TODO
 
 # Credits
--------
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
