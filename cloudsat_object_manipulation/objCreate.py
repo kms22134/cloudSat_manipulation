@@ -117,10 +117,43 @@ class cloudSatObjects(object):
             #if(i == 100): break
     
     def _packed(self):
+        path.split(self.input)[1].split('.')[0]
         if(path.splitext(self.input)[-1] == '.xz'):
             subprocess.call(['tar','xJvf',self.input])
         else:
             raise Exception("add decompression of other variables")
+
+        self.input = f'{getcwd()}/{path.split(dirIn)[1].split(".")[0]}'
+        self._ravel_files()
+
+        if(not self._path_decision(self.output)): self._create_output_dir()
+        
+        for i,self.file in enumerate(self.inFiles):
+            self._format_output_file_name()
+            if(self._overwrite_output_file()): continue
+            self.h5Obj   = File(self.file,'r')                  ## read hdf5 file
+            self.dataset = self.h5Obj[self.dataset_arg] ## obtain datafields
+            self._h5_outside_datasets()                 ## separate datafields
+            self.height = self.geoFields['Height'][:,]  ## pull height fields
+            if(len(self.idVars) == 2):
+                self._var_dict()
+                self._create_binary()
+            else: raise Exception("add condition for only one variable")
+            self._createObjects()
+            self._create_sparce()
+            self._remove_single_bin_clouds()
+            self.sparce_flat_indx = ravel_multi_index((self.csr_indx,self.csr_indy),self.cloudObjects.shape)
+
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            #ADD cloud object statistics
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            self._cStats()
+            self._min_max_lat_lon()
+            self._single_layer_clouds()
+            self._verbose_file_name()
+            self._write_netcdf()
+
+            #if(i == 100): break
 
     def _verbose_file_name(self,):
         '''
@@ -441,111 +474,3 @@ class cloudSatObjects(object):
 
         self.var[~((self.var <= max(self.validRange)) & (data >= min(self.validRange)))] = self.missing
 
-
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##compData = tarfile.open(inDir)
-##compData.extractall()
-#system('tar -xvf /media/ksmalley/CLOUDSAT/2B-GEOPROF-LIDAR.tar.xz')#rewrite using subprocess until tarfile module figured out
-#exit()
-#
-#i = 0
-#breakFlag = True
-#while(breakFlag):
-#    try: 
-#        tmpComp = compData.next()
-#        print(tmpComp.name)
-#    except:
-#        print('file corrupt')
-#    continue
-#
-#    h5FileObj = compData.extractfile(tmpComp)
-#
-#    if(h5FileObj != None):
-#        h5FBytesIO = BytesIO(h5FileObj.read())
-#        print(tmpComp.name)
-#        #h5FBytesIO = h5FBytesIO.read()
-#
-#        h5Obj = File(h5FBytesIO,'r')
-#
-#        dataset = h5Obj[args.dataset]
-#
-#        geoFields  = dataset['Geolocation Fields']
-#        dataFields = dataset['Data Fields']
-#        swath      = dataset['Swath Attributes']
-#
-#        height = geoFields['Height'][:,]
-#
-#        if(len(idVariables) == 2): 
-#            data = dict(
-#                    map(
-#                        partial(varDict,
-#                            dSet  = dataFields,
-#                            swath = swath,
-#                            scale = args.scale,
-#                            fill  = args.mask,
-#                            ),
-#                        idVariables
-#                        )
-#                    )
-#            data = LayerObjects.createBinary(data[idVariables[0]].astype(int32),data[idVariables[-1]].astype(int32),height.astype(int32),-99)
-#
-#        else:
-#            raise Exception('make condition using mapping function for only 1 variable')
-#
-#        cloudObjects,numL = label(data)
-#
-#        csr_cOBJS = csr_matrix(cloudObjects).tocoo()
-#        cxr_indx  = array(csr_cOBJS.row)
-#        cxr_indy  = array(csr_cOBJS.col)
-#        cxr_data  = array(csr_cOBJS.data)
-#
-#        unqCLDS,unqCnts  = unique(cxr_data,return_counts = True)
-#
-#        noSinglePixelClds = unqCLDS[unqCnts > 1]
-#        #noSingleMsk       = isin_nb(cxr_data,noSinglePixelClds)
-#        noSingleMsk       = isin(cxr_data,noSinglePixelClds)
-#        cxr_indx          = cxr_indx[noSingleMsk]
-#        cxr_indy          = cxr_indy[noSingleMsk]
-#        cxr_data          = cxr_data[noSingleMsk]
-#        
-#        #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Write into extent function within cloud statistics package%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#        extent  = DataFrame({'Data' : Series(cxr_data), 'indx' : cxr_indx, 'indy' : cxr_indy})
-#        extent  = ((extent.groupby(['indy','Data']).count() - 1) * 1.1) + 1.7
-#        extent  = extent.unstack()
-#        eMin    = extent.min().values
-#        emean   = extent.mean().values
-#        eMedian = extent.median().values
-#        eMax    = extent.max().values
-#        #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#        #exit()
-#        h5Obj.close()
-#        h5FBytesIO.close()
-#
-#    #try:    tmpComp.name.split('_')
-#    #except: breakFlag = False
-#
-#    #nameSplit = tmpComp.name.split('_')
-#
-#    #if(nameSplit[0][-1] == '.'): continue
-#    #if(len(nameSplit) <= 2): continue
-#
-#    #varName = f'{nameSplit[3]}_{nameSplit[6]}'
-#    #
-#    #fIn  = f"{h5Out}{tmpComp.name}"
-#
-#    #fOut = f'{nameSplit[0].split("/")[-1]}_{varName}.h5'
-#    #fOut = f"{h5Out}{'/'.join(nameSplit[0].split('/')[:-1])}/{fOut}"
-#
-#    #if(path.exists(fOut)): continue
-#
-#    #compData.extract(tmpComp,path = h5Out)
-#
-#    #sp.call([command,fIn,fOut])
-#
-#    #remove(fIn)
-#
-#    #print(fOut)
-#
-#    i+=1
-#
-#    if(i == 10000): break
