@@ -6,3 +6,8 @@ History
 ------------------
 
 * First release on PyPI.
+
+0.1.1 (2019-08-19)
+------------------
+
+* modify layer top and bottom function in cloud_stats.py to use cython to optimize loop
