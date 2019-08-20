@@ -11,3 +11,8 @@ History
 ------------------
 
 * modify layer top and bottom function in cloud_stats.py to use cython to optimize loop
+
+0.1.2 (2019-08-20)
+------------------
+
+* added pypi classifiers
