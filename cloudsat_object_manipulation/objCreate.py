@@ -118,11 +118,12 @@ class cloudSatObjects(object):
     
     def _packed(self):
         path.split(self.input)[1].split('.')[0]
+        #%%%%%%%%%%%%%%%%%%%%%%%%%%write as utility function that can be used by several different classes%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if(path.splitext(self.input)[-1] == '.xz'):
             subprocess.call(['tar','xJvf',self.input])
         else:
             raise Exception("add decompression of other variables")
-
+        #%%%%%%%%%%%%%%%%%%%%%%%%%%write as utility function that can be used by several different classes%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         self.input = f'{getcwd()}/{path.split(self.input)[1].split(".")[0]}'
         self._ravel_files()
 
