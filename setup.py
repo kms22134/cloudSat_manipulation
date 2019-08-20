@@ -91,7 +91,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/kms2213/cloudsat_object_manipulation',
+    url='https://github.com/kms22134/cloudsat_object_manipulation',
     version='0.1.2',
     zip_safe=False,
     cmdclass = {'build_ext': build_ext}
