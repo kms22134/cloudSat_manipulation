@@ -16,7 +16,7 @@ This package contains a set of packages and command line plugins that can identi
 To install cloudsat_object_manipulation
 
 ```bash
-$ pip install https://github.com/kms22134/cloudsat_manipulation
+$ pip install git+https://github.com/kms22134/cloudsat_manipulation
 ```
 
 # Features
