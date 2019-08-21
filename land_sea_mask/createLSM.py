@@ -87,6 +87,7 @@ class LSM(object):
         #%%%%%%%%%%%%%%%%%%%%%%%%%%write as utility function that can be used by several different classes%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         self.input = f'{getcwd()}/{inputDir}'
+        self._unpacked()
 
     def _append_to_netcdf(self,):
         '''
