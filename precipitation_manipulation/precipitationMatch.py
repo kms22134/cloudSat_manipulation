@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
-import precipAnalysis
+from precipitation_manipulation import precipAnalysis
 
 
 def main():

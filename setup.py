@@ -75,9 +75,9 @@ setup(
     description="This package contains a set of packages and command line plugins that can identify indidual cloud objects along CloudSat's orbit and their associated properties (i.e. cloud type, size, precipitating)",
     entry_points={
         'console_scripts': [
-            #'lsm_Create=cloudsat_object_manipulation.cldObj_creation:main',
             'cloudSat_object_creator=cloudsat_object_manipulation.cldObj_creation:main',
             'lsmCreate=land_sea_mask.landSeaMaskCreate:main',
+            'precipMatch=precipitation_manipulation.precipitationMatch:main',
         ],
     },
     install_requires=requirements,
@@ -87,7 +87,7 @@ setup(
     keywords='cloudsat_object_manipulation',
     name='cloudsat_object_manipulation',
     ext_modules = extensions,
-    packages=find_packages(include=['cloudsat_object_manipulation','land_sea_mask']),
+    packages=find_packages(include=['cloudsat_object_manipulation','land_sea_mask','precipitation_manipulation',]),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
