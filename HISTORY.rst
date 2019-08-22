@@ -16,3 +16,9 @@ History
 ------------------
 
 * Added pypi classifiers
+
+0.1.4 (2019-08-22)
+------------------
+
+* Added precipitation matching functionality
+
