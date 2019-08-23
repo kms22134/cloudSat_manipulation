@@ -22,3 +22,8 @@ History
 
 * Added precipitation matching functionality
 
+0.1.5 (2019-08-23)
+------------------
+
+* added conditional function that checks if rain rate and/or rain function exist in the output netcdf4 do not run functions to find rain rate and rain fraction
+
