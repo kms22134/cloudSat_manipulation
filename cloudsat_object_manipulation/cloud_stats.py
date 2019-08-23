@@ -31,6 +31,8 @@ class ObjectStatistics(object):
     def cloud_layer_base_and_top(self,topData,baseData,fullObjects,height,fill = -99):
         '''
         '''
+        #LayerObjects.match_level(topData,baseData)
+        #exit()
         self._topHeight   = []
         self._baseHeight  = []
         self._x_only_objs = []
