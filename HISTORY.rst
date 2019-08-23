@@ -34,3 +34,8 @@ History
 
 * testing a new way using c extension to match cloud top, base, and thickness
 
+0.1.7 (2019-08-23)
+------------------
+
+* Added function to identify warm clouds
+
