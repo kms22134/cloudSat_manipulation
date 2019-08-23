@@ -72,18 +72,22 @@ class PrecipMatch(object):
             self.precipFlagVariable[self.precipFlagVariable < 0] = 0
 
             self._extract_sparce_datasets()
-            self._sparce_to_full()
 
-            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%do precipitation analysis%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            self.rain_certain()
-            self.rain_certain_and_probable()
-            self.rain_certain_and_probable_and_possible()
-            self.combine_rain_flags()
-            self.rain_rate()
-            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            if(self._nc_contains('rain_rate') or self._nc_contains('rain_fraction')):
+                self.ncData.close()
+            else:
+                self._sparce_to_full()
 
-            self.ncData.close()
-            self._append_to_netcdf()
+                #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%do precipitation analysis%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                self.rain_certain()
+                self.rain_certain_and_probable()
+                self.rain_certain_and_probable_and_possible()
+                self.combine_rain_flags()
+                self.rain_rate()
+                #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                self.ncData.close()
+                self._append_to_netcdf()
 
     def rain_rate(self,):
         '''
@@ -116,8 +120,7 @@ class PrecipMatch(object):
         rain_objs   = rain_max.index.values
 
         out_clds    = unique(df_all.objects.values)
-        out_cld_msk = isin(out_clds,rain_objs)
-        
+        out_cld_msk = isin(out_clds,rain_objs) 
         out_min    = zeros(out_clds.size,dtype = float)
         out_mean   = zeros(out_clds.size,dtype = float)
         out_median = zeros(out_clds.size,dtype = float)
@@ -385,3 +388,8 @@ class PrecipMatch(object):
         var[var == fill] = nan
 
         return var
+
+    def _nc_contains(self,var):
+        '''
+        '''
+        return self.ncData.__contains__(var)
