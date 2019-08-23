@@ -55,9 +55,13 @@ class PrecipMatch(object):
 
             #%%%%%%%%%%%%%%%%%%%%%%%%%if either the 2C-RAIN-PROFILE or 2C-PRECIP-COLUMN file do not exist delete output netcdf%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             try:    self.rrFile  = self.rainRateFiles[self.rrDateTags.index(ncDateTag)]
-            except: remove(self.ncFile)
+            except: 
+                remove(self.ncFile)
+                continue
             try:    self.pfFile  = self.precipFlagFiles[self.pfDateTags.index(ncDateTag)]
-            except: remove(self.ncFile)
+            except: 
+                remove(self.ncFile)
+                continue
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             self.rrh5Obj = File(self.rrFile,'r')#read 2C-RAIN-PROFILE data
