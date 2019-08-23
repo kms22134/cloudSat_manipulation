@@ -27,3 +27,4 @@ History
 
 * added conditional function that checks if rain rate and/or rain function exist in the output netcdf4 do not run functions to find rain rate and rain fraction
 
+* added conditional check if the input h5 file does not exist to remove output netcdf file
