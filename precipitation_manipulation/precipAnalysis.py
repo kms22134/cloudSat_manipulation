@@ -1,4 +1,4 @@
-from os import path,getcwd,walk,makedirs
+from os import path,getcwd,walk,makedirs,remove
 import subprocess
 from h5py import File
 from xarray import open_dataset
@@ -52,10 +52,17 @@ class PrecipMatch(object):
             ncDateTag    = path.basename(self.ncFile)
             ncDateTag    = path.splitext(ncDateTag)[0]
             ncDateTag    = ncDateTag.split('_')[0]
-            self.rrFile  = self.rainRateFiles[self.rrDateTags.index(ncDateTag)]
-            self.pfFile  = self.precipFlagFiles[self.pfDateTags.index(ncDateTag)]
+
+            #%%%%%%%%%%%%%%%%%%%%%%%%%if either the 2C-RAIN-PROFILE or 2C-PRECIP-COLUMN file do not exist delete output netcdf%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            try:    self.rrFile  = self.rainRateFiles[self.rrDateTags.index(ncDateTag)]
+            except: remove(self.ncFile)
+            try:    self.pfFile  = self.precipFlagFiles[self.pfDateTags.index(ncDateTag)]
+            except: remove(self.ncFile)
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
             self.rrh5Obj = File(self.rrFile,'r')#read 2C-RAIN-PROFILE data
             self.pfh5Obj = File(self.pfFile,'r')#read 2C-PRECIP-COLUMN data
+
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%read datasets%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             self.rrDataset                                  = self.rrh5Obj['2C-RAIN-PROFILE']
             self.rrDataFields,self.rrGeoFields,self.rrSwath = self._h5_outside_datasets(self.rrDataset)  
