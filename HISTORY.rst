@@ -39,3 +39,7 @@ History
 
 * Added function to identify warm clouds
 
+* Added function to match reanalysis (currently only tested with ERA-Interim) LTS to cloudsat objects
+
+* LTS matching function currently written in pure python, but is being tested as a c-extension
+
