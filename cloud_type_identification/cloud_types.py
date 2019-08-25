@@ -3,9 +3,10 @@ import subprocess
 from datetime import datetime
 from h5py import File
 from xarray import open_dataset
+from netCDF4 import Dataset
 from numpy import array,unravel_index,unique,isin,digitize,zeros
 from numpy import isnan,nan
-from numpy import int8
+from numpy import int8,float32
 from scipy.sparse import coo_matrix
 from pandas import Series,DataFrame
 import ReanalysisMatch
@@ -115,7 +116,10 @@ class CloudType(object):
             self.cloud_type_out = zeros(self.unq_clds.shape,dtype = int8)
             self.cloud_type_out[isin(self.unq_clds,self.shallow_cu)] = 1 # 1 = shallow_cumulus clouds
             self.cloud_type_out[isin(self.unq_clds,self.strato_cu)]  = 2 # 2 = stratoCumulus clouds
-            ## append to output netcdf
+
+            self.ncData.close()
+
+            self._append_to_netcdf()
 
     def identify_warm_clouds(self,):
         '''
@@ -270,6 +274,37 @@ class CloudType(object):
         self.sparceObjects    = self.ncData.sparce_objects.values
         self.sparceIndices    = self.ncData.sparce_1d_indx.values
         self.xIndc,self.yIndc = unravel_index(self.sparceIndices,self.orbitShape)
+
+    def _append_to_netcdf(self,):
+        '''
+        '''
+        self.ncOut  = Dataset(self.ncFile,'a')
+
+        self.lts_var = self.ncOut.createVariable(
+                'lts',
+                float32,
+                ('allObjects_unq',),
+                fill_value = -1e20,
+                )
+        self.lts_var.description = 'Lower tropospheric stability using 0.75 x 0.75 6-hourly 1000-hPa and 700-hPa temperature associated with each individual cloud object'
+        self.lts_var.long_name = 'Lower Tropospheric Stability'
+        self.lts_var.units = 'K'
+        self.lts_var[:,] = self.lts
+
+        self.cldType_var = self.ncOut.createVariable(
+                'cloud_type',
+                int8,
+                ('allObjects_unq',),
+                #fill value = -1e20,
+                )
+        self.cldType_var.description = "The cloud type of each cloud object"
+        self.cldType_var.cloud_type  = '''Cloud Type:
+            Shallow Cumulus: 1
+            StratoCumulus:   2
+            other types:     not defined (currently 0)'''
+        self.cldType_var[:,] = self.cloud_type_out
+
+        self.ncOut.close()
 
     def _sparce_to_full(self,):
         self.full_objs = array(coo_matrix((self.sparceObjects,(self.xIndc,self.yIndc)),shape = self.orbitShape).todense())
