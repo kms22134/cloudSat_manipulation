@@ -3,10 +3,12 @@ import subprocess
 from datetime import datetime
 from h5py import File
 from xarray import open_dataset
-from numpy import array,unravel_index,unique,isin
+from numpy import array,unravel_index,unique,isin,digitize,zeros
 from numpy import isnan,nan
+from numpy import int8
 from scipy.sparse import coo_matrix
 from pandas import Series,DataFrame
+import ReanalysisMatch
 from sys import exit
 
 class CloudType(object):
@@ -25,6 +27,8 @@ class CloudType(object):
         self.glPath  = pArgs.geoprofLidar
         self.ltsFile = pArgs.reanalysis
         self.ncDir   = pArgs.netCDF
+
+        self.lts_thresh = 18.55# shallow/stratocumulus threshold units: K
 
     def run(self,fTypeHDF = 'h5'):
         '''
@@ -88,6 +92,7 @@ class CloudType(object):
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%read variables from output netcdf%%%%%%%%%%%%%%%%%%%%%%%%%%%
             self._extract_sparce_datasets()
+            self.unq_clds = self.ncData.allObjects_unq.values
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             self._sparce_to_full()
@@ -96,14 +101,21 @@ class CloudType(object):
             self.identify_warm_clouds()
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%match lts to cloud objects%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            self.match_lts(
+            self.lts = self.match_lts(
                     self.ncData.lat_bounds.values,
                     self.reanalysisData,
                     ncDateTag
                     )
-            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            ##identify stratocumulus clouds
-            ##identify shallow cumulus
+            shallow_lts = self.unq_clds[self.lts < self.lts_thresh]
+            strato_lts  = self.unq_clds[self.lts >= self.lts_thresh]
+
+            self.shallow_cu = self.warm_clouds[isin(self.warm_clouds,shallow_lts)]
+            self.strato_cu  = self.warm_clouds[isin(self.warm_clouds,strato_lts)]
+
+            self.cloud_type_out = zeros(self.unq_clds.shape,dtype = int8)
+            self.cloud_type_out[isin(self.unq_clds,self.shallow_cu)] = 1 # 1 = shallow_cumulus clouds
+            self.cloud_type_out[isin(self.unq_clds,self.strato_cu)]  = 2 # 2 = stratoCumulus clouds
+            ## append to output netcdf
 
     def identify_warm_clouds(self,):
         '''
@@ -130,7 +142,35 @@ class CloudType(object):
         lat_bins = reData.latitude.values + (res / 2.)
         lon_bins = reData.longitude.values + (res / 2.)
 
-        print(self.ncData)
+        lat_bins = lat_bins[:-1]
+        lon_bins = lon_bins[:-1]
+
+        #lat_bins = array([lat_bins[0] + (res / 2.)] + lat_bins.tolist())
+        #lon_bins = array([lon_bins[0] - (res / 2.)] + lon_bins.tolist())
+
+        cld_lat = array(self.glGeoFields['Latitude'][:,].tolist()).flatten()
+        cld_lon = array(self.glGeoFields['Longitude'][:,].tolist()).flatten() % 360
+        
+        out_lts = array([-1e20,] * self.unq_clds.size)
+
+        tmpLts = reData.lts.values
+        for i,u in enumerate(self.unq_clds):
+            tmp_sparceMsk  = self.sparceObjects == u
+            tmpX           = self.xIndc[tmp_sparceMsk]
+            tmpLat         = cld_lat[tmpX]
+            tmpLon         = cld_lon[tmpX]
+            tmp_lat_bounds = digitize(tmpLat,bins = lat_bins)
+            tmp_lon_bounds = digitize(tmpLon,bins = lon_bins)
+            out_lts[i] = tmpLts[tmp_lat_bounds,tmp_lon_bounds].max()
+
+        return out_lts
+
+        #ReanalysisMatch.reanalysis_match_var(
+        #        self.ncData.lat_bounds.values,
+        #        self.ncData.lon_bounds.values,
+        #        lat_bins,
+        #        lon_bins,
+        #        )
 
     def _packed(self,dirIn):
         '''
