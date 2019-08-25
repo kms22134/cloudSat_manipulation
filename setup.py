@@ -46,6 +46,13 @@ extensions = [
             extra_compile_args=['-O3'],
             include_dirs = [numpy.get_include(),f'{os.getcwd()}/include'],
             ),
+        Extension(
+            "ReanalysisMatch",              # Extension name
+            sources=[f'c_extensions/reanalysis_match.pyx',], # Cython source filename
+            language="c++",              # Creates C++ source
+            extra_compile_args=['-O3'],
+            include_dirs = [numpy.get_include(),f'{os.getcwd()}/include'],
+            ),
         ]
 
 setup(

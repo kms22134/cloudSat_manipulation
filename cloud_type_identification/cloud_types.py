@@ -1,11 +1,13 @@
 from os import path,walk,remove
 import subprocess
+from datetime import datetime
 from h5py import File
 from xarray import open_dataset
 from numpy import array,unravel_index,unique,isin
 from numpy import isnan,nan
 from scipy.sparse import coo_matrix
 from pandas import Series,DataFrame
+from sys import exit
 
 class CloudType(object):
     '''
@@ -19,9 +21,10 @@ class CloudType(object):
             pArgs: command line arguments of type argparse
         '''
 
-        self.pfPath = pArgs.precipColumn
-        self.glPath = pArgs.geoprofLidar
-        self.ncDir  = pArgs.netCDF
+        self.pfPath  = pArgs.precipColumn
+        self.glPath  = pArgs.geoprofLidar
+        self.ltsFile = pArgs.reanalysis
+        self.ncDir   = pArgs.netCDF
 
     def run(self,fTypeHDF = 'h5'):
         '''
@@ -79,12 +82,26 @@ class CloudType(object):
             self.freezing_level = self._scaleAdjust('Freezing_level',self.freezing_level,self.pfSwath)
             self.freezing_level = self._maskData('Freezing_level',self.freezing_level,self.pfSwath)
             self.freezing_level = self.freezing_level * self.kmTom
+
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%read reanalysis netcdf containing lts%%%%%%%%%%%%%%%%%%%%%%
+            self.reanalysisData = open_dataset(self.ltsFile)
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%read variables from output netcdf%%%%%%%%%%%%%%%%%%%%%%%%%%%
             self._extract_sparce_datasets()
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             self._sparce_to_full()
 
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%identify warm cloud objects%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             self.identify_warm_clouds()
-            ## match lts to cloud objects
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%match lts to cloud objects%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            self.match_lts(
+                    self.ncData.lat_bounds.values,
+                    self.reanalysisData,
+                    ncDateTag
+                    )
+            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             ##identify stratocumulus clouds
             ##identify shallow cumulus
 
@@ -104,7 +121,16 @@ class CloudType(object):
 
         self.warm_clouds = tmpWrm[wrmfrac == 1]
 
+    def match_lts(self,cldLat,reData,date,res = 0.75):
+        '''
+        '''
+        date   = datetime.strptime(date,'%Y%j%H%M%S')
+        reData = reData.sel(time = date.strftime('%Y-%m-%d-%H'),method = 'nearest')
 
+        lat_bins = reData.latitude.values + (res / 2.)
+        lon_bins = reData.longitude.values + (res / 2.)
+
+        print(self.ncData)
 
     def _packed(self,dirIn):
         '''

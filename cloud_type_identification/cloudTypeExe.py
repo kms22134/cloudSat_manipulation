@@ -22,6 +22,13 @@ def main():
             help = 'Path to the 2B-GEOPROF-LIDAR tar file or uncompressed directory',
             )
     parser.add_argument(
+            '-r',
+            '--reanalysis',
+            type = str,
+            required = True,
+            help = 'Path to the reanalysis file that contains lts',
+            )
+    parser.add_argument(
             '-nc',
             '--netCDF',
             type = str,
