@@ -16,12 +16,27 @@ This package contains a set of packages and command line plugins that can identi
 To install cloudsat_object_manipulation
 
 ```bash
-$ pip install git+https://github.com/kms22134/cloudsat_manipulation
+$ pip install cloudsat-object-manipulation
 ```
 
 # Features
 
-* TODO
+* Cloud Object Identification
+
+  * Explain Functionality
+
+* Land Sea Mask Matching
+
+  * Explain Functionality
+
+* Precipitating Cloud Identification
+
+  * Explain Functionality
+
+* Cloud Type Identification
+
+  * Explain Functionality
+
 
 # Credits
 
