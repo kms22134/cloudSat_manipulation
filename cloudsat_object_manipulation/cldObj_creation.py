@@ -63,7 +63,16 @@ def main():
             
     args = parser.parse_args()
     
-    runObjectCreate = objCreate.cloudSatObjects(args)
+    runObjectCreate = objCreate.cloudSatObjects(
+            args.input,
+            args.output,
+            args.scale,
+            args.mask,
+            args.idVariables,
+            args.verbose,
+            args.overwrite,
+            args.dataset
+            )
     runObjectCreate.run()
 
 if __name__ == '__main__': main()

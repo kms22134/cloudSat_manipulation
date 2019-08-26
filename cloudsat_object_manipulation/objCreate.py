@@ -35,17 +35,17 @@ class cloudSatObjects(object):
     '''
     '''
 
-    def __init__(self,pArgs,):
+    def __init__(self,ino,out,scale,mask,idVars,verbose,overwrite,dset):
         '''
         '''
-        self.input       = pArgs.input
-        self.output      = pArgs.output
-        self.scale       = pArgs.scale
-        self.mask        = pArgs.mask
-        self.idVars      = reduce(add,pArgs.idVariables)
-        self.verbose     = pArgs.verbose
-        self.overwrite   = pArgs.overwrite
-        self.dataset_arg = pArgs.dataset
+        self.input       = inp
+        self.output      = out
+        self.scale       = scale
+        self.mask        = mask
+        self.idVars      = reduce(add,idVars)
+        self.verbose     = verbose
+        self.overwrite   = overwrite
+        self.dataset_arg = dset
         
         self.layerFlag = 'LayerBase' in self.idVars and 'LayerTop' in self.idVars
 
