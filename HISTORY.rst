@@ -48,3 +48,4 @@ History
 
 * added getcwd to functions imported from the os package in the cloud_type identification package
 
+* Updated readme and began writing the usage part of the documentation
