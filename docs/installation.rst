@@ -32,7 +32,7 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/kms2213/cloudsat_object_manipulation
+    $ git clone git://github.com/kms22134/cloudsat_manipulation.git
 
 Or download the `tarball`_:
 
