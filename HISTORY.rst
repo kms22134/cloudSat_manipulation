@@ -43,3 +43,8 @@ History
 
 * LTS matching function currently written in pure python, but is being tested as a c-extension
 
+0.1.8 (2019-08-26)
+------------------
+
+* added getcwd to functions imported from the os package in the cloud_type identification package
+
