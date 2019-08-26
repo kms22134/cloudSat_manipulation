@@ -1,5 +1,5 @@
-Welcome to CloudSat Object Manipulation's documentation!
-======================================
+CloudSat cloudy object identification and manipulation in Python
+===============================================================
 
 .. toctree::
    :maxdepth: 2
@@ -12,8 +12,3 @@ Welcome to CloudSat Object Manipulation's documentation!
    contributing
    history
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
