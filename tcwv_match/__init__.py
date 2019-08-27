@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-precipitation analysis package
+Package that matches total-column water vapor (tcwv) to individual cloudsat objects
 
 add explanation of what this package does...
 

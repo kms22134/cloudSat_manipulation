@@ -100,7 +100,7 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/kms22134/cloudsat_manipulation',
-    version='0.1.9',
+    version='0.1.10',
     zip_safe=False,
     cmdclass = {'build_ext': build_ext}
 )
