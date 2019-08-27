@@ -49,3 +49,8 @@ History
 * added getcwd to functions imported from the os package in the cloud_type identification package
 
 * Updated readme and began writing the usage part of the documentation
+
+0.1.10 (2019-08-27)
+------------------
+
+* added command line executable that matches total column water vapor (currently only using ERA-Interim) to cloudsat objects
