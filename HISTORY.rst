@@ -54,3 +54,8 @@ History
 -------------------
 
 * added command line executable that matches total column water vapor (currently only using ERA-Interim) to cloudsat objects
+
+0.1.11 (2019-09-09)
+-------------------
+
+* added command line executable that matches relative humidity below 3 km (currently only using ERA-Interim) to cloudsat objects
