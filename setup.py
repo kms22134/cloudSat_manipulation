@@ -87,6 +87,7 @@ setup(
             'precipMatch=precipitation_manipulation.precipitationMatch:main',
             'cloudType=cloud_type_identification.cloudTypeExe:main',
             'tcwvMatch=tcwv_match.__main__:main',
+            'rhMatch=rh_match.__main__:main',
         ],
     },
     install_requires=requirements,

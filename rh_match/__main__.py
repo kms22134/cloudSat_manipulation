@@ -1,5 +1,5 @@
 import argparse
-import rhMatch
+from rh_match import rhMatch
 
 def main():
     parser = argparse.ArgumentParser()
